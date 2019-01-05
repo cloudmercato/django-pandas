@@ -1,6 +1,6 @@
 from django.db import models
 from django.utils.encoding import python_2_unicode_compatible
-from django_pandas.managers import DataFrameManager, PassThroughManager
+from django_pandas.managers import DataFrameManager
 
 
 @python_2_unicode_compatible
@@ -193,12 +193,7 @@ class DudeQuerySet(models.query.QuerySet):
         return self.filter(name__iexact=name)
 
 
-class AbidingManager(PassThroughManager):
-    def get_queryset(self):
-        return DudeQuerySet(self.model).abiding()
-
-    get_query_set = get_queryset
-
+class AbidingManager(DudeQuerySet):
     def get_stats(self):
         return {
             "abiding_count": self.count(),
@@ -211,7 +206,7 @@ class Dude(models.Model):
     name = models.CharField(max_length=20)
     has_rug = models.BooleanField(default=False)
 
-    objects = PassThroughManager(DudeQuerySet)
+    objects = DataFrameManager()
     abiders = AbidingManager()
 
 
@@ -219,14 +214,7 @@ class Car(models.Model):
     name = models.CharField(max_length=20)
     owner = models.ForeignKey(Dude, related_name='cars_owned', on_delete=models.CASCADE)
 
-    objects = PassThroughManager(DudeQuerySet)
-
-
-class SpotManager(PassThroughManager):
-    def get_queryset(self):
-        return super(SpotManager, self).get_queryset().filter(secret=False)
-
-    get_query_set = get_queryset
+    objects = DataFrameManager()
 
 
 class SpotQuerySet(models.query.QuerySet):
@@ -244,4 +232,4 @@ class Spot(models.Model):
     secret = models.BooleanField(default=False)
     owner = models.ForeignKey(Dude, related_name='spots_owned', on_delete=models.CASCADE)
 
-    objects = SpotManager.for_queryset_class(SpotQuerySet)()
+    objects = SpotQuerySet.as_manager()
